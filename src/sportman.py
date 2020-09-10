@@ -7,7 +7,8 @@ import time
 from sys import argv
 
 # custom yahoo finance api module
-from core import yahoofinance as yf
+# from core import yahoofinance as yf
+from core import chart
 from util import logger as log
 
 # if the time is between 9:30am and 4:00pm
@@ -85,7 +86,7 @@ def update_tickers():
     # for each unique ticker
     for t in tickers:
         # get the stock price from yahoo finance
-        prices[t] = yf.get_stock_price(t)
+        prices[t] = chart.get_stock_price(t)
 
     return prices
 
@@ -123,7 +124,7 @@ def load_portfolio(filename):
                 position['ticker'] = entry[0]
                 position['buy'] = float(entry[1])
                 position['shares'] = int(entry[2])
-                position['current'] = yf.get_stock_price(position['ticker'])
+                position['current'] = chart.get_stock_price(position['ticker'])
                 portfolio = portfolio.append(position, ignore_index=True)
                 log.debug(f'loaded {entry[0]} from portfolio')
         return portfolio, metadata
