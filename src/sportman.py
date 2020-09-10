@@ -8,12 +8,14 @@ from sys import argv
 
 # custom yahoo finance api module
 from core import yahoofinance as yf
+from util import logger as log
 
 # if the time is between 9:30am and 4:00pm
 # TODO: check if its a weekend or market holiday
 market_open = lambda: 570 <= dt.now().hour * 60 + dt.now().minute <= 960
 
 def main():
+    log.level_stdout = 0
     filename = ''
     use_color = False
     use_polybar = False
@@ -29,6 +31,12 @@ def main():
             use_polybar = True
         if arg in ['-u', '--unicode']:
             use_unicode = True
+
+    
+    log.debug(f'filename = {filename}')
+    log.debug(f'use_color = {use_color}')
+    log.debug(f'use_polybar = {use_polybar}')
+    log.debug(f'use_unicode = {use_unicode}')
 
     # load portfolio and get current stock prices
     portfolio, metadata = load_portfolio(filename)
@@ -72,11 +80,13 @@ def update_tickers():
     Returns:
         dict: A dictionary where the key is the ticker and the value is the price
     """
+    log.trace('update_tickers()')
     prices = {}
     # for each unique ticker
     for t in tickers:
         # get the stock price from yahoo finance
         prices[t] = yf.get_stock_price(t)
+
     return prices
 
 def load_portfolio(filename):
@@ -92,6 +102,7 @@ def load_portfolio(filename):
 
     """
 
+    log.trace('load_portfolio()')
     portfolio = pd.DataFrame(columns=['ticker', 'buy', 'shares', 'current'])
     metadata = {}
     metadata['cash'] = 0
@@ -104,6 +115,7 @@ def load_portfolio(filename):
             # used to measure total portfolio value
             if entry[0] == 'BUYPOWER':
                 metadata['cash'] = float(entry[1])
+                log.debug('loaded cash from portfolio')
             else:
                 # load each stock from the portfolio file
                 position = {}
@@ -113,6 +125,7 @@ def load_portfolio(filename):
                 position['shares'] = int(entry[2])
                 position['current'] = yf.get_stock_price(position['ticker'])
                 portfolio = portfolio.append(position, ignore_index=True)
+                log.debug(f'loaded {entry[0]} from portfolio')
         return portfolio, metadata
 
 def portfolio_buy_value(portfolio):
@@ -129,6 +142,7 @@ def portfolio_buy_value(portfolio):
     Returns:
         float: The portfolio's total buy value
     """
+    log.trace('portfolio_buy_value()')
     buyvalue = 0
     for idx, position in portfolio.iterrows():
         buyvalue += position['buy'] * position['shares']
@@ -149,6 +163,7 @@ def portfolio_current_value(portfolio):
     Returns:
         float: The portfolio's total current value
     """
+    log.trace('portfolio_current_value()')
     currvalue = 0
     for idx, position in portfolio.iterrows():
         currvalue += position['current'] * position['shares']
@@ -165,6 +180,7 @@ def update_portfolio(portfolio):
     Returns:
         pd.DataFrame: Updated portfolio
     """
+    log.trace('update_portfolio()')
     # get the prices of all stock tickers
     prices = update_tickers()
 
